@@ -1,0 +1,48 @@
+kubernetes-intro:
+  - kubernetes-intro/*
+
+kubernetes-controllers:
+  - kubernetes-controllers/*
+  
+kubernetes-security:
+  - kubernetes-security/*
+  
+kubernetes-debug:
+  - kubernetes-debug/*
+  
+kubernetes-gitops:
+  - kubernetes-gitops/*
+
+kubernetes-logging:
+  - kubernetes-logging/*
+  
+kubernetes-monitoring:
+  - kubernetes-monitoring/*
+  
+kubernetes-networks:
+  - kubernetes-networks/*
+  
+kubernetes-operators:
+  - kubernetes-operators/*
+  
+kubernetes-production-clusters:
+  - kubernetes-production-clusters/*
+  
+kubernetes-storage:
+  - kubernetes-storage/*
+  
+kubernetes-templating:
+  - kubernetes-templating/*
+  
+kubernetes-vault:
+  - kubernetes-vault/*
+  
+kubernetes-volumes:
+  - kubernetes-volumes/*
+  
+Review Required:
+  - kubernetes-templating/*
+  - kubernetes-production-clusters/*
+  - kubernetes-monitoring/*
+  - kubernetes-logging/*
+  - kubernetes-debug/*
