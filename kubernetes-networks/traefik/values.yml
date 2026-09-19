@@ -1,0 +1,31 @@
+ingressRoute:
+  dashboard:
+    enabled: true
+    matchRule: Host(`dashboard.localhost`)
+    entryPoints:
+      - web
+providers:
+  kubernetesGateway:
+    enabled: true
+
+gateway:
+  enabled: false
+
+api:
+  insecure: true
+
+ports:
+  traefik:
+    port: 8080
+    expose:
+      default: true       # ← ключевой параметр: добавляет порт в Service
+    exposedPort: 8080
+    protocol: TCP
+  web:
+    port: 80
+    exposedPort: 80
+    protocol: TCP
+  websecure:
+    port: 443
+    exposedPort: 443
+    protocol: TCP
