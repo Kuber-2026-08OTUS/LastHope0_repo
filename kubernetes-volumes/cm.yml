@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-homework
+  namespace: homework
+data:
+  key1: "test1"
+  key2: "test2"

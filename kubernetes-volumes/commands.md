@@ -60,3 +60,27 @@ Open in your browser
 
 http://homework.otus/
 http://homework.otus/homepage
+
+# Kubernetes Volumes
+
+## Create SC, PV, PVS
+
+```bash
+kubectl apply -f storageClass.yml
+kubectl apply -f pvc.yml
+kubectl apply -f cm.yml
+```
+
+### Validate
+
+```bash
+kubectl get sc -n homework
+kubectl get pv -n homework
+kubectl get pvc -n homework
+kubectl get cm -n homework
+```
+
+## Apply deployment.yaml
+```bash
+kubectl apply -f deployment.yml
+```

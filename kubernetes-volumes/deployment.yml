@@ -25,11 +25,20 @@ spec:
       initContainers:
       - name: install
         image: busybox
-        command: ["wget", "-O", "/init/index.html", "http://info.cern.ch"]
+        command:
+        - sh
+        - -c
+        - |
+          if [ -f /init/index.html ]; then
+            echo "File already exists, skipping download"
+          else
+            wget -O /init/index.html http://info.cern.ch
+          fi
+          test -s /init/index.html || exit 1
+          chmod 644 /init/index.html
         volumeMounts:
         - name: workdir
           mountPath: /init
-
       containers:
       - name: nginx
         image: nginx:alpine
@@ -38,13 +47,12 @@ spec:
         volumeMounts:
         - name: workdir
           mountPath: /homework
+        - name: config
+          mountPath: /homework/conf
+          readOnly: true
         command: ["/bin/sh", "-c"]
         args:
         - echo 'server { listen 8000; root /homework; }' > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'
-        lifecycle:
-          preStop:
-            exec:
-              command: ["/bin/sh", "-c", "rm -f /homework/index.html"]
         startupProbe:
           httpGet:
             path: /
@@ -67,4 +75,8 @@ spec:
 
       volumes:
       - name: workdir
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: pvc-homework
+      - name: config
+        configMap:
+          name: cm-homework
