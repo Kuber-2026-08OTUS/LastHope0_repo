@@ -84,3 +84,5 @@ kubectl get cm -n homework
 ```bash
 kubectl apply -f deployment.yml
 ```
+
+http://homework.otus/conf/key1
