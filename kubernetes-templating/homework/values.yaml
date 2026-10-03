@@ -1,0 +1,209 @@
+# ============================================================
+# ServiceAccount
+# ============================================================
+serviceAccount:
+  create: true
+  name: monitoring
+
+# ============================================================
+# RBAC (ClusterRole + ClusterRoleBinding)
+# ============================================================
+rbac:
+  create: true
+  clusterRoleName: ""
+  clusterRoleBindingName: ""
+
+# ============================================================
+# PVC
+# ============================================================
+pvc:
+  create: true
+  name: pvc-homework
+  storageClassName: sc-homework
+  accessModes: [ReadWriteOnce]
+  size: 50Mi
+
+# ============================================================
+# ConfigMap
+# ============================================================
+configMap:
+  create: true
+  name: cm-homework
+  data:
+    key1: "test1"
+    key2: "test2"
+
+# ============================================================
+# Deployment
+# ============================================================
+replicaCount: 3
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+
+image:
+  repository: nginx
+  tag: alpine
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+securityContext: {}
+
+serviceAccountName: monitoring
+
+nodeSelector:
+  homework: "true"
+
+tolerations: []
+affinity: {}
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+initContainers:
+  - name: install
+    image: busybox
+    command:
+      - sh
+      - -c
+      - |
+        if [ -f /init/index.html ]; then
+          echo "File index.html already exists, skipping download"
+        else
+          wget -O /init/index.html http://info.cern.ch
+        fi
+        test -s /init/index.html || exit 1
+        chmod 644 /init/index.html
+        if [ -f /init/metrics.html ]; then
+          echo "File metrics.html already exists, skipping download"
+        else
+          wget --no-check-certificate \
+               --header="Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" \
+               -O /init/metrics.html https://kubernetes.default.svc/metrics
+        fi
+        test -s /init/metrics.html || exit 1
+        chmod 644 /init/metrics.html
+    volumeMounts:
+      - name: workdir
+        mountPath: /init
+
+command: ["/bin/sh", "-c"]
+args:
+  - echo 'server { listen 8000; root /homework; }' > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'
+
+probes:
+  startup:
+    enabled: true
+    httpGet:
+      path: /
+      port: 8000
+    failureThreshold: 30
+    periodSeconds: 2
+  liveness:
+    enabled: true
+    httpGet:
+      path: /
+      port: 8000
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    httpGet:
+      path: /index.html
+      port: 8000
+    initialDelaySeconds: 3
+    periodSeconds: 5
+
+volumeMounts:
+  - name: workdir
+    mountPath: /homework
+  - name: config
+    mountPath: /homework/conf
+    readOnly: true
+
+volumes:
+  - name: workdir
+    persistentVolumeClaim:
+      claimName: pvc-homework
+  - name: config
+    configMap:
+      name: cm-homework
+
+# ============================================================
+# Autoscaling (HPA)
+# ============================================================
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+# ============================================================
+# Service
+# ============================================================
+service:
+  name: nginx
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+# ============================================================
+# Gateway API
+# ============================================================
+gateway:
+  create: true
+  name: traefik
+  className: traefik
+  listener:
+    name: http
+    port: 80
+    hostname: homework.otus
+
+httpRoute:
+  create: true
+  hostname: homework.otus
+
+# ============================================================
+# Redis (Bitnami community chart) — только как зависимость
+# ============================================================
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+  master:
+    persistence:
+      enabled: true
+      storageClass: sc-homework
+      size: 1Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 256Mi
+    nodeSelector:
+      homework: "true"
+  replica:
+    replicaCount: 0
+  metrics:
+    enabled: false
+  sentinel:
+    enabled: false
+  cluster:
+    enabled: false
