@@ -1,0 +1,71 @@
+Спасибо за установку {{ .Chart.Name }} (release: {{ .Release.Name }})!
+
+═══════════════════════════════════════════════════════════════
+  АДРЕС СЕРВИСА
+═══════════════════════════════════════════════════════════════
+
+Внутри кластера:
+  http://{{ .Values.service.name }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+
+{{- if .Values.httpRoute.create }}
+
+Снаружи (через Gateway API):
+  http://{{ .Values.httpRoute.hostname }}
+  → /           — index.html
+  → /homepage   — redirect (307) на /index.html
+
+  Проверить локально:
+    kubectl port-forward -n {{ .Release.Namespace }} svc/{{ .Values.service.name }} 8080:{{ .Values.service.port }}
+    curl -H "Host: {{ .Values.httpRoute.hostname }}" http://localhost:8080/
+{{- else }}
+
+Проброс порта:
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ .Values.service.name }} 8080:{{ .Values.service.port }}
+  Открой: http://localhost:8080
+{{- end }}
+
+═══════════════════════════════════════════════════════════════
+  ПОЛЕЗНЫЕ КОМАНДЫ
+═══════════════════════════════════════════════════════════════
+
+Статус:
+  kubectl get all -n {{ .Release.Namespace }}
+
+Логи init-контейнера:
+  kubectl logs -n {{ .Release.Namespace }} deploy/{{ include "homework.fullname" . }} -c install
+
+{{- if .Values.autoscaling.enabled }}
+HPA:
+  kubectl get hpa -n {{ .Release.Namespace }}
+{{- end }}
+
+{{- if .Values.rbac.create }}
+RBAC:
+  kubectl get clusterrole {{ include "homework.clusterRoleName" . }}
+  kubectl get clusterrolebinding {{ include "homework.clusterRoleBindingName" . }}
+{{- end }}
+
+{{- if .Values.probes.liveness.enabled }}
+Пробы включены: startup={{ .Values.probes.startup.enabled }}, liveness={{ .Values.probes.liveness.enabled }}, readiness={{ .Values.probes.readiness.enabled }}
+{{- else }}
+Пробы отключены.
+{{- end }}
+
+{{- if .Values.redis.enabled }}
+
+═══════════════════════════════════════════════════════════════
+  REDIS
+═══════════════════════════════════════════════════════════════
+
+Проверить:
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name=redis
+
+Подключиться:
+  kubectl exec -n {{ .Release.Namespace }} -it {{ .Release.Name }}-redis-master-0 -- redis-cli
+
+Пароль:
+  kubectl get secret -n {{ .Release.Namespace }} {{ .Release.Name }}-redis -o jsonpath='{.data.redis-password}' | base64 -d
+
+Внутренний адрес:
+  {{ .Release.Name }}-redis-master.{{ .Release.Namespace }}.svc.cluster.local:6379
+{{- end }}

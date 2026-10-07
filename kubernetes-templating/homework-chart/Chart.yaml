@@ -1,0 +1,14 @@
+apiVersion: v2
+name: homework
+description: Nginx with init container, metrics scraping, Gateway API routing, HPA, and Redis dependency
+type: application
+version: 0.1.0
+appVersion: "1.27"
+kubeVersion: ">=1.28.0"
+icon: https://nginx.org/nginx.png
+
+dependencies:
+  - name: redis
+    version: "20.x.x"
+    repository: "oci://registry-1.docker.io/bitnamicharts"
+    condition: redis.enabled
