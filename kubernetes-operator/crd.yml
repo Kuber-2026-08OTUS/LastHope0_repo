@@ -1,0 +1,71 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: mysqls.otus.homework
+spec:
+  group: otus.homework
+  scope: Namespaced
+  names:
+    plural: mysqls
+    singular: mysql
+    kind: MySQL
+    shortNames:
+      - my
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - spec
+          properties:
+            spec:
+              type: object
+              required:
+                - image
+                - database
+                - password
+                - storage_size
+              properties:
+                image:
+                  type: string
+                  minLength: 1
+                  description: Docker image for MySQL
+                database:
+                  type: string
+                  minLength: 1
+                  description: Database name
+                password:
+                  type: string
+                  minLength: 1
+                  description: Password for the database
+                storage_size:
+                  type: string
+                  x-kubernetes-validations:
+                    - rule: "self.matches('^[0-9]+(Mi|Gi|Ti)$')"
+                      message: "storage_size must be like 1Gi, 500Mi, 2Ti"
+                    - rule: "!self.startsWith('0')"
+                      message: "storage_size must not start with 0"
+                  description: Storage size (e.g. 1Gi, 500Mi)
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Image
+          type: string
+          jsonPath: .spec.image
+        - name: Database
+          type: string
+          jsonPath: .spec.database
+        - name: Storage
+          type: string
+          jsonPath: .spec.storage_size
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp

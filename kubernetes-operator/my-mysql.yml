@@ -1,0 +1,14 @@
+apiVersion: otus.homework/v1
+kind: MySQL
+metadata:
+  name: my-mysql
+  namespace: default
+  labels:
+    app.kubernetes.io/name: my-mysql
+    app.kubernetes.io/instance: my-mysql-dev
+    app.kubernetes.io/managed-by: kubectl
+spec:
+  image: "mysql:8.0"
+  database: "appdb"
+  password: "supersecret"
+  storage_size: "1Gi"
