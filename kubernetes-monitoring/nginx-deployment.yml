@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-stub-config
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name _;
+
+        location = /stub_status {
+            stub_status;
+        }
+
+        location / {
+            return 404;
+        }
+    }
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-stub
+  labels:
+    app: nginx-stub
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: nginx-stub
+  template:
+    metadata:
+      labels:
+        app: nginx-stub
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - name: http
+              containerPort: 80
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /stub_status
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /stub_status
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
+
+        - name: nginx-exporter
+          image: nginx/nginx-prometheus-exporter:1.4.0
+          args:
+            - "-nginx.scrape-uri=http://127.0.0.1:80/stub_status"
+          ports:
+            - name: metrics
+              containerPort: 9113
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9113
+            initialDelaySeconds: 3
+            periodSeconds: 10
+
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: nginx-stub-config
