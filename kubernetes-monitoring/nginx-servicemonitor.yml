@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: nginx-stub
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: nginx-stub
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s
