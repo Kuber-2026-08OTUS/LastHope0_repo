@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubernetes-networks
+  namespace: argocd
+spec:
+  destination:
+    namespace: homework
+    server: https://kubernetes.default.svc
+  project: otus
+  source:
+    directory:
+      exclude: namespace.yml
+    path: kubernetes-networks
+    repoURL: https://github.com/Kuber-2026-08OTUS/LastHope0_repo.git
+    targetRevision: HEAD
