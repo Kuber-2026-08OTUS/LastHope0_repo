@@ -1,0 +1,47 @@
+global:
+  security:
+    allowInsecureImages: true
+
+server:
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/vault
+    tag: 1.16.2-debian-12-r2
+
+  # Количество реплик (в Bitnami-чарте это replicaCount, а не ha.replicas)
+  replicaCount: 3
+
+  # Init-контейнер для исправления прав на том
+  initContainers:
+    - name: fix-permissions
+      image: docker.io/bitnamilegacy/os-shell:12-debian-12-r36
+      command:
+        - /bin/bash
+        - -ec
+        - |
+          chown -R 1001:1001 /bitnami/vault/data
+      securityContext:
+        runAsUser: 0
+      volumeMounts:
+        - name: data
+          mountPath: /bitnami/vault/data
+
+  # Конфигурация Vault — здесь указываем Consul как бэкенд
+  config: |
+    ui = true
+    disable_mlock = true
+    listener "tcp" {
+      tls_disable = 1
+      address = "[::]:8200"
+      cluster_address = "[::]:8201"
+    }
+    storage "consul" {
+      path = "vault"
+      address = "consul-api.consul.svc.cluster.local:8500"
+    }
+
+injector:
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/vault-k8s
+    tag: 1.4.2-debian-12-r0
