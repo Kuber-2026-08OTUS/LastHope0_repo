@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: consul-api
+  namespace: consul
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: consul
+    app.kubernetes.io/instance: consul
+  ports:
+    - name: http
+      port: 8500
+      targetPort: 8500
+      protocol: TCP
